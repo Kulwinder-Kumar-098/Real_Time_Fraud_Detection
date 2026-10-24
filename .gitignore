@@ -5,16 +5,21 @@ build/
 dist/
 wheels/
 *.egg-info
-.venv
+.venv/
 .pytest_cache/
 
 # Environment secrets
 .env
 
-# Database & temporary logs
-*.log
+# Database & temporary logs (SQLite is re-initialized on deploy via build.sh)
+data/*.db
 data/*.db-shm
 data/*.db-wal
+*.log
+
+# Dev/experiment artifacts not part of the fraud detection system
+uuid_creater/transaction.csv
+fake_data_names.csv
 
 # IDE
 .vscode/
