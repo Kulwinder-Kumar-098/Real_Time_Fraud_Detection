@@ -19,7 +19,7 @@ import config
 app = create_app()
 
 if __name__ == "__main__":
-    print(f"Starting Veritas Risk Ops on {config.HOST}:{config.PORT}...")
+    print(f"Starting Spam — Real-Time Fraud Detection on {config.HOST}:{config.PORT}...")
     try:
         from waitress import serve
         print("Serving with production Waitress WSGI server...")

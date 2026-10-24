@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Veritas Risk Ops — Real-Time Fraud Detection{% endblock %}</title>
+  <title>{% block title %}Spam — Real-Time Fraud Detection{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <!-- Chart.js for data visualization -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
@@ -14,13 +14,13 @@
     <!-- Sidebar Navigation -->
     <aside class="app-sidebar">
       <div class="sidebar-header">
-        <span class="brand-badge">Financial Risk Ops</span>
+        <span class="brand-badge">Fraud Detection</span>
         <div class="brand-title">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             <path d="m9 12 2 2 4-4"/>
           </svg>
-          VERITAS RISK
+          SPAM
         </div>
         <div class="brand-subtitle">Real-Time Fraud Prevention</div>
       </div>
@@ -93,25 +93,14 @@
       <!-- Top Action Bar -->
       <header class="top-header">
         <div class="page-breadcrumb">
-          <span>Veritas</span>
+          <span>Spam</span>
           <span>/</span>
           <span class="current">{% block breadcrumb %}Risk Operations{% endblock %}</span>
         </div>
 
         <div class="top-actions">
-          <span class="badge-tag model">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
-            Model: <span id="top-model-name">{{ model_name | default("XGBoost Classifier") }}</span>
-          </span>
-
-          <span class="badge-tag">
-            Threshold: <strong id="top-threshold-val">{{ "%.2f"|format(threshold|default(0.42)) }}</strong>
-          </span>
-
           <span class="badge-tag" id="live-latency-pill">
-            Latency: <strong>7.4 ms</strong>
+            Latency: <strong>— ms</strong>
           </span>
         </div>
       </header>

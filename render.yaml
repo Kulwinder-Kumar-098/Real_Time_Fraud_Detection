@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: veritas-fraud-detection
+    name: spam-fraud-detection
     runtime: python
     region: oregon
     plan: free
