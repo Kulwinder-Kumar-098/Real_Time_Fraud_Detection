@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Veritas Risk Ops — Real-Time Fraud Detection{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <!-- Chart.js for data visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- Sidebar Navigation -->
+    <aside class="app-sidebar">
+      <div class="sidebar-header">
+        <span class="brand-badge">Financial Risk Ops</span>
+        <div class="brand-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+          VERITAS RISK
+        </div>
+        <div class="brand-subtitle">Real-Time Fraud Prevention</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Core Operations</div>
+
+        <a href="{{ url_for('index') }}" class="nav-link {% if active_tab == 'dashboard' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect width="7" height="9" x="3" y="3" rx="1"/>
+            <rect width="7" height="5" x="14" y="3" rx="1"/>
+            <rect width="7" height="9" x="14" y="12" rx="1"/>
+            <rect width="7" height="5" x="3" y="16" rx="1"/>
+          </svg>
+          Risk Dashboard
+        </a>
+
+        <a href="{{ url_for('transactions_view') }}" class="nav-link {% if active_tab == 'transactions' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+            <path d="M8 7h6"/>
+            <path d="M8 11h8"/>
+            <path d="M8 15h5"/>
+          </svg>
+          Transactions Ledger
+        </a>
+
+        <div class="nav-section-title">Machine Learning</div>
+
+        <a href="{{ url_for('models_view') }}" class="nav-link {% if active_tab == 'models' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="m22 7-8.5 8.5-5-5L2 17"/>
+            <path d="M16 7h6v6"/>
+          </svg>
+          Model Performance
+        </a>
+
+        <a href="{{ url_for('monitoring_view') }}" class="nav-link {% if active_tab == 'monitoring' %}active{% endif %}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          System Health & Drift
+        </a>
+
+        <div class="nav-section-title">API & Verification</div>
+
+        <a href="{{ url_for('health_check') }}" target="_blank" class="nav-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          Healthcheck (/health)
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="system-status-indicator">
+          <span id="sidebar-pulse-dot" class="pulse-dot running"></span>
+          <div>
+            <strong style="color: #ffffff;">ENGINE ONLINE</strong>
+            <div style="font-size: 10px; color: #64748b;">Sub-15ms Scoring Active</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Application View -->
+    <main class="app-main">
+      <!-- Top Action Bar -->
+      <header class="top-header">
+        <div class="page-breadcrumb">
+          <span>Veritas</span>
+          <span>/</span>
+          <span class="current">{% block breadcrumb %}Risk Operations{% endblock %}</span>
+        </div>
+
+        <div class="top-actions">
+          <span class="badge-tag model">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            Model: <span id="top-model-name">{{ model_name | default("XGBoost Classifier") }}</span>
+          </span>
+
+          <span class="badge-tag">
+            Threshold: <strong id="top-threshold-val">{{ "%.2f"|format(threshold|default(0.42)) }}</strong>
+          </span>
+
+          <span class="badge-tag" id="live-latency-pill">
+            Latency: <strong>7.4 ms</strong>
+          </span>
+        </div>
+      </header>
+
+      <!-- Workspace Body -->
+      <div class="workspace-content">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+  {% block scripts_extra %}{% endblock %}
+</body>
+</html>

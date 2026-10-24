@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block breadcrumb %}Live Risk Dashboard{% endblock %}
+
+{% block content %}
+<!-- Continuous Simulation Control Banner -->
+<div class="sim-banner">
+  <div class="sim-info">
+    <span class="pulse-dot {% if sim_status.is_running %}running{% else %}stopped{% endif %}" id="banner-pulse-dot"></span>
+    <div>
+      <div class="sim-title">
+        Real-Time Transaction Stream Simulation
+        <span class="badge {% if sim_status.is_running %}badge-approve{% else %}badge-review{% endif %}" id="sim-status-badge">
+          {% if sim_status.is_running %}STREAM ACTIVE{% else %}STREAM PAUSED{% endif %}
+        </span>
+      </div>
+      <div class="sim-desc">
+        Continuously generating synthetic banking transactions with realistic spending profiles, velocity spikes, and fraud anomalies.
+      </div>
+    </div>
+  </div>
+
+  <div class="sim-controls">
+    <div class="form-group" style="margin-right: 8px;">
+      <label class="form-label" for="sim-rate-select">Rate:</label>
+      <select id="sim-rate-select" class="form-select" style="padding: 4px 8px; font-size: 11.5px;">
+        <option value="1.5">1 tx / 1.5s</option>
+        <option value="1.0" selected>1 tx / 1.0s</option>
+        <option value="0.5">2 tx / 1.0s</option>
+      </select>
+    </div>
+
+    <button id="btn-toggle-sim" class="btn {% if sim_status.is_running %}btn-secondary{% else %}btn-teal{% endif %}" onclick="toggleSimulation()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="sim-btn-icon">
+        {% if sim_status.is_running %}
+        <rect x="6" y="4" width="4" height="16"/>
+        <rect x="14" y="4" width="4" height="16"/>
+        {% else %}
+        <polygon points="5 3 19 12 5 21 5 3"/>
+        {% endif %}
+      </svg>
+      <span id="sim-btn-text">{% if sim_status.is_running %}Pause Stream{% else %}Start Live Stream{% endif %}</span>
+    </button>
+  </div>
+</div>
+
+<!-- KPI Summary Cards -->
+<div class="kpi-grid">
+  <!-- Card 1: Total Volume -->
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Total Transactions</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+        <rect width="20" height="14" x="2" y="5" rx="2"/>
+        <line x1="2" x2="22" y1="10" y2="10"/>
+      </svg>
+    </div>
+    <div class="kpi-value" id="kpi-total-tx">{{ "{:,}".format(kpis.total_transactions) }}</div>
+    <div class="kpi-footer">
+      <span>Total Monitored: <strong id="kpi-total-vol">${{ "{:,.2f}".format(kpis.total_volume) }}</strong></span>
+    </div>
+  </div>
+
+  <!-- Card 2: Fraud Detected -->
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Fraud Incidents Flagged</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
+        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </div>
+    <div class="kpi-value" style="color: var(--alert-red);" id="kpi-fraud-count">
+      {{ "{:,}".format(kpis.fraud_predicted_count) }}
+    </div>
+    <div class="kpi-footer">
+      <span class="kpi-trend danger">Declined: <span id="kpi-decline-count">{{ kpis.decline_count }}</span></span>
+      <span>• Review: <span id="kpi-review-count">{{ kpis.review_count }}</span></span>
+    </div>
+  </div>
+
+  <!-- Card 3: Predicted Fraud Rate -->
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Predicted Fraud Rate</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2">
+        <line x1="19" y1="5" x2="5" y2="19"/>
+        <circle cx="6.5" cy="6.5" r="2.5"/>
+        <circle cx="17.5" cy="17.5" r="2.5"/>
+      </svg>
+    </div>
+    <div class="kpi-value" id="kpi-fraud-rate">{{ "%.2f"|format(kpis.predicted_fraud_rate) }}%</div>
+    <div class="kpi-footer">
+      <span>Simulated Ground Truth: <strong>{{ "%.2f"|format(kpis.actual_fraud_rate) }}%</strong></span>
+    </div>
+  </div>
+
+  <!-- Card 4: Avg Amount & Latency -->
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Avg Transaction Amount</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/>
+        <path d="M12 18V6"/>
+      </svg>
+    </div>
+    <div class="kpi-value" id="kpi-avg-amount">${{ "%.2f"|format(kpis.avg_amount) }}</div>
+    <div class="kpi-footer">
+      <span class="kpi-trend success">Avg Latency: <span id="kpi-avg-latency">{{ kpis.avg_latency_ms }} ms</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- Live Real-Time Transaction Feed Card -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <span class="pulse-dot running" style="width: 7px; height: 7px;"></span>
+      Real-Time Transaction Stream
+      <span class="badge-tag" id="stream-counter-tag">Listening for transactions...</span>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <a href="{{ url_for('transactions_view') }}" class="btn btn-secondary btn-sm">View Full Ledger</a>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="data-table" id="live-table">
+      <thead>
+        <tr>
+          <th>Time (UTC)</th>
+          <th>Transaction ID</th>
+          <th>User</th>
+          <th>Merchant / Category</th>
+          <th>Location</th>
+          <th>Device Fingerprint</th>
+          <th>Amount</th>
+          <th>Risk Score</th>
+          <th>Decision</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="live-table-body">
+        <!-- Live rows populated dynamically via SSE / Polling -->
+        <tr>
+          <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 30px;">
+            Connecting to live event stream...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Analytical Visualizations Grid -->
+<div class="grid-2col">
+  <!-- Chart 1: Hourly Volume & Fraud Timeline -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Transaction Volume & Fraud Trends</div>
+      <span class="badge-tag">Hourly Aggregation</span>
+    </div>
+    <div class="card-body">
+      <div style="height: 260px; position: relative;">
+        <canvas id="timelineChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 2: Risk Score Distribution -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Inference Risk Score Distribution</div>
+      <span class="badge-tag">Threshold: {{ "%.2f"|format(threshold|default(0.42)) }}</span>
+    </div>
+    <div class="card-body">
+      <div style="height: 260px; position: relative;">
+        <canvas id="riskDistChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Merchant Category Risk Breakdown Table -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">Merchant Category Risk Breakdown</div>
+    <span class="badge-tag">Anomaly Surface Analysis</span>
+  </div>
+  <div class="table-responsive">
+    <table class="data-table" id="category-risk-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Total Transactions</th>
+          <th>Fraud Count</th>
+          <th>Fraud Rate</th>
+          <th>Avg Transaction Value</th>
+          <th>Risk Posture</th>
+        </tr>
+      </thead>
+      <tbody id="category-table-body">
+        <tr>
+          <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">
+            Loading merchant category statistics...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Quick Forensic Inspection View -->
+<div id="inspect-modal" class="modal-backdrop" onclick="closeInspectModal(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">
+        <span id="modal-tx-title">Transaction Risk Inspection</span>
+      </div>
+      <button class="modal-close" onclick="closeInspectModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-content-body">
+      <!-- Populated dynamically via JS -->
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

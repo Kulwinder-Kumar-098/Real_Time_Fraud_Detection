@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block breadcrumb %}
+<a href="{{ url_for('transactions_view') }}" style="color: var(--text-muted); text-decoration: none;">Transactions</a>
+<span>/</span>
+<span>{{ tx.transaction_id }}</span>
+{% endblock %}
+
+{% block content %}
+<!-- Top Header Banner -->
+<div class="sim-banner" style="border-left-color: {% if tx.decision == 'DECLINE' %}var(--alert-red){% elif tx.decision == 'REVIEW' %}var(--warning-amber){% else %}var(--success-green){% endif %};">
+  <div class="sim-info">
+    <div>
+      <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em;">
+        Forensic Risk Dossier
+      </div>
+      <div class="sim-title" style="font-size: 18px; margin-top: 2px;">
+        {{ tx.transaction_id }}
+      </div>
+      <div class="sim-desc">
+        Processed at {{ tx.timestamp }} &bull; Inference Latency: {{ tx.latency_ms }} ms
+      </div>
+    </div>
+  </div>
+
+  <div class="sim-controls">
+    <span class="badge {% if tx.decision == 'DECLINE' %}badge-decline{% elif tx.decision == 'REVIEW' %}badge-review{% else %}badge-approve{% endif %}" style="font-size: 13px; padding: 6px 12px;">
+      {{ tx.decision }}
+    </span>
+    <span class="risk-pill {% if tx.risk_score >= 0.80 %}critical{% elif tx.risk_score >= 0.45 %}high{% elif tx.risk_score >= 0.25 %}medium{% else %}low{% endif %}" style="font-size: 13px; padding: 6px 10px;">
+      {{ "%.1f"|format(tx.risk_score * 100) }}% RISK SCORE
+    </span>
+  </div>
+</div>
+
+<!-- Triggered ML Explainability Risk Factors -->
+{% if tx.risk_reasons and tx.risk_reasons|length > 0 %}
+<div class="risk-reasons-box" style="margin-bottom: 20px;">
+  <div class="risk-reasons-title" style="font-size: 13px;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    ML Model Anomaly Explanations & Trigger Factors
+  </div>
+  <ul class="risk-reasons-list" style="font-size: 13px; line-height: 1.6;">
+    {% for reason in tx.risk_reasons %}
+    <li><strong>{{ reason }}</strong></li>
+    {% endfor %}
+  </ul>
+</div>
+{% else %}
+<div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 14px 18px; border-radius: 6px; font-size: 13px; margin-bottom: 20px;">
+  No anomalous risk triggers activated. Transaction adheres to expected customer behavior patterns.
+</div>
+{% endif %}
+
+<div class="grid-2col">
+  <!-- Left Column: Transaction Attributes -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Transaction Telemetry</div>
+      <span class="badge-tag">Operational Parameters</span>
+    </div>
+    <div class="card-body">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-key">Transaction Amount</div>
+          <div class="detail-val cell-amount" style="font-size: 16px;">${{ "%.2f"|format(tx.amount) }}</div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-key">User Identifier</div>
+          <div class="detail-val cell-mono">{{ tx.user_id }}</div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-key">Merchant Name</div>
+          <div class="detail-val">{{ tx.merchant }}</div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-key">Merchant Category</div>
+          <div class="detail-val">{{ tx.merchant_category }}</div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-key">Geographic Location</div>
+          <div class="detail-val">{{ tx.location }}</div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-key">Payment Method</div>
+          <div class="detail-val">{{ tx.payment_method }}</div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-key">Channel</div>
+          <div class="detail-val">{{ tx.channel | default("Online") }}</div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-key">Device Fingerprint</div>
+          <div class="detail-val" style="font-size: 12px;">{{ tx.device }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Model Decisioning & Validation -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Risk Scoring Diagnostics</div>
+      <span class="badge-tag">Decision Engine</span>
+    </div>
+    <div class="card-body">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-key">Predicted Fraud Probability</div>
+          <div class="detail-val cell-mono" style="font-size: 16px;">{{ "%.4f"|format(tx.risk_score) }}</div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-key">Assigned Risk Tier</div>
+          <div class="detail-val" style="font-weight: 700;">{{ tx.risk_tier }}</div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-key">System Decision</div>
+          <div class="detail-val">{{ tx.decision }}</div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-key">Scoring Latency</div>
+          <div class="detail-val cell-mono">{{ tx.latency_ms }} ms</div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-key">Simulated Ground Truth</div>
+          <div class="detail-val">
+            {% if tx.ground_truth_label == 1 %}
+            <span class="badge badge-decline">Simulated Fraud</span> ({{ tx.fraud_scenario }})
+            {% else %}
+            <span class="badge badge-approve">Simulated Legitimate</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-key">Prediction Accuracy</div>
+          <div class="detail-val">
+            {% if tx.ground_truth_label == tx.is_fraud_predicted %}
+            <span style="color: var(--success-green); font-weight: 600;">Match (True {% if tx.ground_truth_label == 1 %}Positive{% else %}Negative{% endif %})</span>
+            {% else %}
+            <span style="color: var(--alert-red); font-weight: 600;">Discrepancy ({% if tx.is_fraud_predicted == 1 %}False Positive{% else %}False Negative{% endif %})</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px; padding: 12px; background-color: #f8fafc; border-radius: 4px; border: 1px solid var(--surface-border); font-size: 11.5px; color: var(--text-muted);">
+        <strong>Audit Trail:</strong> Record logged at {{ tx.created_at }}. Inference performed without target leakage.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 10px;">
+  <a href="{{ url_for('transactions_view') }}" class="btn btn-secondary">&larr; Back to Ledger</a>
+</div>
+{% endblock %}

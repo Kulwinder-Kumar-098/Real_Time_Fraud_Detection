@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block breadcrumb %}Not Found{% endblock %}
+
+{% block content %}
+<div class="card" style="text-align: center; padding: 60px 20px;">
+  <div style="font-size: 36px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px;">404</div>
+  <div style="font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 12px;">
+    {{ message | default("Resource or Transaction Not Found") }}
+  </div>
+  <p style="color: var(--text-muted); font-size: 13px; max-width: 400px; margin: 0 auto 20px;">
+    The requested transaction record or operational view does not exist in the database ledger.
+  </p>
+  <a href="{{ url_for('index') }}" class="btn btn-teal">Return to Dashboard</a>
+</div>
+{% endblock %}

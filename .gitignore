@@ -1,10 +1,21 @@
-# Python-generated files
+# Python
 __pycache__/
 *.py[oc]
 build/
 dist/
 wheels/
 *.egg-info
-
-# Virtual environments
 .venv
+.pytest_cache/
+
+# Environment secrets
+.env
+
+# Database & temporary logs
+*.log
+data/*.db-shm
+data/*.db-wal
+
+# IDE
+.vscode/
+.idea/

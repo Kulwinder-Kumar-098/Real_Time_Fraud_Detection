@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block breadcrumb %}Transactions Ledger{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+        <path d="M8 7h6"/>
+        <path d="M8 11h8"/>
+        <path d="M8 15h5"/>
+      </svg>
+      Comprehensive Transaction Ledger
+      <span class="badge-tag">{{ total_records }} Total Records</span>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <form method="GET" action="{{ url_for('transactions_view') }}" class="filter-bar">
+    <div class="form-group">
+      <label class="form-label" for="decision">Decision:</label>
+      <select name="decision" id="decision" class="form-select" onchange="this.form.submit()">
+        <option value="ALL" {% if decision_filter == 'ALL' %}selected{% endif %}>All Decisions</option>
+        <option value="DECLINE" {% if decision_filter == 'DECLINE' %}selected{% endif %}>DECLINE</option>
+        <option value="REVIEW" {% if decision_filter == 'REVIEW' %}selected{% endif %}>REVIEW</option>
+        <option value="APPROVE" {% if decision_filter == 'APPROVE' %}selected{% endif %}>APPROVE</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="risk_tier">Risk Tier:</label>
+      <select name="risk_tier" id="risk_tier" class="form-select" onchange="this.form.submit()">
+        <option value="ALL" {% if risk_filter == 'ALL' %}selected{% endif %}>All Tiers</option>
+        <option value="CRITICAL" {% if risk_filter == 'CRITICAL' %}selected{% endif %}>Critical</option>
+        <option value="HIGH" {% if risk_filter == 'HIGH' %}selected{% endif %}>High</option>
+        <option value="MEDIUM" {% if risk_filter == 'MEDIUM' %}selected{% endif %}>Medium</option>
+        <option value="LOW" {% if risk_filter == 'LOW' %}selected{% endif %}>Low</option>
+      </select>
+    </div>
+
+    <div class="form-group" style="flex-grow: 1; max-width: 380px;">
+      <input type="text" name="q" class="form-input" placeholder="Search by Tx ID, User ID, Merchant, Location..." value="{{ search_query }}" style="width: 100%;">
+    </div>
+
+    <button type="submit" class="btn btn-teal btn-sm">Filter</button>
+    {% if decision_filter != 'ALL' or risk_filter != 'ALL' or search_query %}
+    <a href="{{ url_for('transactions_view') }}" class="btn btn-secondary btn-sm">Reset</a>
+    {% endif %}
+  </form>
+
+  <!-- Ledger Table -->
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Transaction ID</th>
+          <th>User ID</th>
+          <th>Merchant</th>
+          <th>Category</th>
+          <th>Location</th>
+          <th>Amount</th>
+          <th>Risk Score</th>
+          <th>Decision</th>
+          <th>Risk Tier</th>
+          <th>Latency</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if transactions %}
+          {% for tx in transactions %}
+          <tr {% if tx.decision == 'DECLINE' %}class="highlight-fraud"{% endif %}>
+            <td class="cell-mono">{{ tx.timestamp[:19] }}</td>
+            <td class="cell-mono">
+              <a href="{{ url_for('transaction_detail_view', tx_id=tx.transaction_id) }}" style="color: var(--teal-primary); font-weight: 600; text-decoration: none;">
+                {{ tx.transaction_id }}
+              </a>
+            </td>
+            <td class="cell-mono">{{ tx.user_id }}</td>
+            <td><strong>{{ tx.merchant }}</strong></td>
+            <td><span style="font-size: 11px; color: var(--text-muted);">{{ tx.merchant_category }}</span></td>
+            <td>{{ tx.location }}</td>
+            <td class="cell-amount">${{ "%.2f"|format(tx.amount) }}</td>
+            <td>
+              <span class="risk-pill {% if tx.risk_score >= 0.80 %}critical{% elif tx.risk_score >= 0.45 %}high{% elif tx.risk_score >= 0.25 %}medium{% else %}low{% endif %}">
+                {{ "%.1f"|format(tx.risk_score * 100) }}%
+              </span>
+            </td>
+            <td>
+              <span class="badge {% if tx.decision == 'DECLINE' %}badge-decline{% elif tx.decision == 'REVIEW' %}badge-review{% else %}badge-approve{% endif %}">
+                {{ tx.decision }}
+              </span>
+            </td>
+            <td><span style="font-size: 11.5px; font-weight: 600;">{{ tx.risk_tier }}</span></td>
+            <td class="cell-mono">{{ tx.latency_ms }} ms</td>
+            <td>
+              <a href="{{ url_for('transaction_detail_view', tx_id=tx.transaction_id) }}" class="btn btn-secondary btn-sm">
+                Analyze
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="12" style="text-align: center; color: var(--text-muted); padding: 30px;">
+              No transactions match your search criteria.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div class="pagination-wrapper">
+    <div>
+      Showing page <strong>{{ current_page }}</strong> of <strong>{{ total_pages }}</strong> ({{ total_records }} entries)
+    </div>
+    <div class="pagination-buttons">
+      {% if current_page > 1 %}
+      <a href="{{ url_for('transactions_view', page=current_page-1, decision=decision_filter, risk_tier=risk_filter, q=search_query) }}" class="btn btn-secondary btn-sm">
+        &laquo; Previous
+      </a>
+      {% endif %}
+
+      {% if current_page < total_pages %}
+      <a href="{{ url_for('transactions_view', page=current_page+1, decision=decision_filter, risk_tier=risk_filter, q=search_query) }}" class="btn btn-secondary btn-sm">
+        Next &raquo;
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

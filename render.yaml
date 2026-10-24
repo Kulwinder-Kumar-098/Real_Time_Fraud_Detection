@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: veritas-fraud-detection
+    runtime: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: bash build.sh
+    startCommand: gunicorn --workers 2 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT wsgi:app
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: COST_FALSE_NEGATIVE
+        value: "350.0"
+      - key: COST_FALSE_POSITIVE
+        value: "20.0"
+      - key: DEFAULT_DECISION_THRESHOLD
+        value: "0.94"
+      - key: DATABASE_PATH
+        value: "data/fraud_detection.db"
+      - key: MODEL_ARTIFACTS_PATH
+        value: "models/model_artifacts.joblib"
+      - key: MODEL_METADATA_PATH
+        value: "models/model_metadata.json"
